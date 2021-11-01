@@ -1,0 +1,97 @@
+Basic DSL Query
+--
+GET /accounts /_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+Leaf Query Clause #1 
+---
+GET /accounts/_search
+{
+  "query": {
+    "match": {
+      "lastname": "Smith"
+    }
+  }
+}
+
+Leaf Query Clause #3
+--
+GET /accounts/_search
+{
+  "query": {
+    "match": {
+      "age": "32"
+    }
+  }
+}
+
+
+
+
+Full Text Query vs. Term Query
+--
+//term
+GET /accounts/_search
+{
+	"query":{
+    "term": {
+      "firstname": {
+        "value": "huff dale"
+      }
+    }
+}
+}
+//full text
+GET /accounts/_search
+{
+	"query":{
+	  "match":{
+	    "firstname": "huff dale"
+	  }
+	}
+}
+
+
+
+Multi-match Query
+---
+
+GET /accounts/_search
+{
+   "query":{
+      "multi_match" : {
+         "query": "ford",
+         "fields": [ "firstname", "address" ]
+      }
+   }
+}
+
+Match_phrase
+---
+GET /accounts/_search
+{
+	“query”: {
+		“match_phrase”:{
+			“phrase”:{
+			“query”: “Sedgwick Street”
+			}
+		}
+	}
+}
+
+Wildcards 
+--
+GET /accounts/_search
+{
+  "query": {
+    "wildcard": {
+      "firstname": {
+        "value": "h*ll"
+      }
+    }
+  }
+}
