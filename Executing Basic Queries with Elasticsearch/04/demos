@@ -1,0 +1,50 @@
+
+Must 
+
+GET _search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "balance": {
+              "gte": 20000,
+              "lte": 40000
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+Should
+
+Must_Not
+
+
+
+
+Boosting....
+
+GET /_search
+{
+  "query": {
+    "boosting": {
+      "positive": {
+        "term": {
+          "address": "street"
+        }
+      },
+      "negative": {
+        "term": {
+          "address": "hope"
+        }
+      },
+      "negative_boost": 0.3
+    }
+  }
+}
+
+//replace negative address with hope, river, madison,
