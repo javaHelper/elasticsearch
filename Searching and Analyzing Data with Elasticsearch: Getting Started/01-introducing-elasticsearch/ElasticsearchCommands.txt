@@ -1,0 +1,1055 @@
+Elastic Search Notes
+
+Module 1 
+
+Demo 1 - Download and install
+
+ES requires Java 8.
+
+java -version
+echo $JAVA_HOME
+
+If no Java then download and install from Oracle's website
+http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html
+
+mkdir es-install
+cd es-install/elasticsearch-5.3.0
+./bin/elasticsearch
+
+./bin/elasticsearch -Ecluster.name=pluralsight_es -Enode.name=my_first_node
+
+
+Demo 2 - Cluster Health
+
+http://localhost:9200
+
+localhost:9200/_cat/health?v&pretty
+http://localhost:9200/_cat/health?v&pretty
+
+localhost:9200/_cat/nodes?v&pretty
+http://localhost:9200/_cat/nodes?v&pretty
+
+
+Module 2 
+
+Demo 1 - curl and listing all indices 
+curl http://www.google.com
+curl http://www.google.co.in
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+Demo 2 - Create an index
+curl -XPUT 'localhost:9200/products?&pretty'
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+curl -XPUT 'localhost:9200/customers?&pretty'
+curl -XPUT 'localhost:9200/orders?&pretty'
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+Demo 3 - Index and Query a document
+
+=curl -XPUT 'localhost:9200/products/mobiles/1?pretty' -d'
+{
+  "name": "iPhone 7",
+  "camera": "12MP",
+  "storage": "256GB",
+  "display": "4.7inch",
+  "battery": "1,960mAh",
+  "reviews": ["Incredibly happy after having used it for one week", "Best iPhone so far", "Very expensive, stick to Android"]
+}
+'
+curl -XPUT 'localhost:9200/products/mobiles/2?pretty' -d'
+{
+  "name": "Samsung Galaxy",
+  "camera": "8MP",
+  "storage": "128GB",
+  "display": "5.2inch",
+  "battery": "1,500mAh",
+  "reviews": ["Best Android phone", "I love it!"]
+}
+'
+curl -XPUT 'localhost:9200/products/mobiles/3?pretty' -d'
+{
+  "name": "Xiaomi Note",
+  "camera": "10MP",
+  "storage": "128GB",
+  "display": "5.5inch",
+  "battery": "1,500mAh",
+  "reviews": ["Really love Xiaomi products", "Too large to use easily"]
+}
+'
+
+curl -XPUT 'localhost:9200/products/laptops/1?pretty' -d'
+{
+  "name": "Macbook Pro",
+  "storage": "500GB",
+  "RAM": "8GB",
+  "display": "13inch",
+  "os": "El Capitan",
+  "reviews": ["A little bulky but a great Mac laptop", "The larger storage capacity is great"]
+}
+'
+
+curl -XPUT 'localhost:9200/products/laptops/2?pretty' -d'
+{
+  "name": "Dell",
+  "storage": "1TB",
+  "RAM": "8GB",
+  "display": "14inch",
+  "os": "Windows 10",
+  "reviews": ["Great work laptop", "Not too heavy"]
+}
+'
+
+curl -XPOST 'localhost:9200/products/mobiles?pretty' -d'
+{
+  "name": "iPhone 6s",
+  "camera": "12MP",
+  "storage": "128GB",
+  "display": "4.7inch",
+  "battery": "1,960mAh",
+  "reviews": ["Incredibly happy after having used it for one week", "Best iPhone so far", "Very expensive, stick to Android"]
+}
+'
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+Demo 4 - Fetching whole and partial documents
+
+curl -XGET 'localhost:9200/products/mobiles/1?pretty'
+curl -XGET 'localhost:9200/products/laptops/1?pretty'
+
+curl -XGET 'localhost:9200/products/laptops/10?pretty'
+
+Partial documents
+
+curl -XGET 'localhost:9200/products/mobiles/1?pretty&_source=false'
+
+curl -XGET 'localhost:9200/products/mobiles/1?pretty&_source=name,reviews'
+curl -XGET 'localhost:9200/products/mobiles/1?pretty&_source=name,reviews,storage'
+
+curl -XGET 'localhost:9200/products/laptops/1?pretty&_source=name,RAM,storage'
+
+Demo 5 - Updating whole and partial documents
+
+curl -XGET 'localhost:9200/products/mobiles/3?pretty'
+
+curl -XPUT 'localhost:9200/products/mobiles/3?pretty' -d'
+{
+  "name": "Xiaomi Note",
+  "camera": "12MP",
+  "storage": "256GB",
+  "display": "5.5inch",
+  "battery": "1,800mAh",
+  "reviews": ["Really love Xiaomi products", "Too large to use easily"]
+}
+'
+
+Updates using the _update API with "doc"
+
+curl -XGET 'localhost:9200/products/mobiles/2?pretty'
+
+curl -XPOST 'localhost:9200/products/mobiles/2/_update?pretty' -d'
+{
+  "doc": {
+     "color": "black"
+  }
+}
+'
+
+curl -XGET 'localhost:9200/products/mobiles/2?pretty'
+
+curl -XPOST 'localhost:9200/products/mobiles/2/_update?pretty' -d'
+{
+  "doc": {
+     "reviews": ["Best Android phone", "I love it!", "Samsung is my favorite"],
+     "texture": "smooth"
+  }
+}
+'
+
+Updates using the _update API with "script"
+
+curl -XPUT 'localhost:9200/products/shoes/1?pretty' -d'
+{
+  "name": "Nike",
+  "size": 8,
+  "color": "white"
+}
+'
+
+curl -XPUT 'localhost:9200/products/shoes/2?pretty' -d'
+{
+  "name": "Adidas",
+  "size": 9,
+  "color": "black"
+}
+'
+
+curl -XGET 'localhost:9200/products/shoes/1?pretty'
+curl -XPOST 'localhost:9200/products/shoes/1/_update?pretty' -d'
+{
+  "script": "ctx._source.size += 2"
+}
+'
+curl -XGET 'localhost:9200/products/shoes/1?pretty'
+
+
+curl -XGET 'localhost:9200/products/shoes/2?pretty'
+curl -XPOST 'localhost:9200/products/shoes/2/_update?pretty' -d'
+{
+  "script": "ctx._source.size -= 1"
+}
+'
+curl -XGET 'localhost:9200/products/shoes/2?pretty'
+
+
+Demo 6 - Deleting an index 
+
+curl -XDELETE 'localhost:9200/products/mobiles/2?pretty'
+curl -XGET 'localhost:9200/products/mobiles/2?pretty'
+
+curl -i -XHEAD 'localhost:9200/products/mobiles/2?pretty'
+
+curl -i -XHEAD 'localhost:9200/products/mobiles/1?pretty'
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+curl -XDELETE 'localhost:9200/customerss?pretty'
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+
+Demo 7 - Bulk indexing documents
+
+Multi-get
+
+curl -XGET 'localhost:9200/_mget?pretty' -d'
+{
+    "docs" : [
+        {
+            "_index" : "products",
+            "_type" : "laptops",
+            "_id" : "1"
+        },
+        {
+            "_index" : "products",
+            "_type" : "laptops",
+            "_id" : "2"
+        }
+    ]
+}
+'
+
+curl -XGET 'localhost:9200/products/_mget?pretty' -d'
+{
+    "docs" : [
+        {
+            "_type" : "laptops",
+            "_id" : "1"
+        },
+        {
+            "_type" : "laptops",
+            "_id" : "2"
+        }
+    ]
+}
+'
+
+curl -XGET 'localhost:9200/products/laptops/_mget?pretty' -d'
+{
+    "docs" : [
+        {
+            "_id" : "1"
+        },
+        {
+            "_id" : "2"
+        }
+    ]
+}
+'
+
+Index multiple documents
+
+curl -XPOST 'localhost:9200/_bulk?pretty' -d'
+{ "index" : { "_index" : "products", "_type" : "shoes", "_id" : "3" } }
+{ "name": "Puma","size": 9,"color": "black" }
+{ "index" : { "_index" : "products", "_type" : "shoes", "_id" : "4" } }
+{ "name": "New Balance","size": 8,"color": "black" }
+'
+
+curl -XPOST 'localhost:9200/products/_bulk?pretty' -d'
+{ "index" : {"_type" : "shoes", "_id" : "3" } }
+{ "name": "Puma","size": 9,"color": "black" }
+{ "index" : {"_type" : "shoes", "_id" : "4" } }
+{ "name": "New Balance","size": 8,"color": "black" }
+'
+
+curl -XPOST 'localhost:9200/products/shoes/_bulk?pretty' -d'
+{ "index" : {"_id" : "3" } }
+{ "name": "Puma","size": 9,"color": "black" }
+{ "index" : {"_id" : "4" } }
+{ "name": "New Balance","size": 8,"color": "black" }
+'
+
+Auto-generate ids
+curl -XPOST 'localhost:9200/products/shoes/_bulk?pretty' -d'
+{ "index" : {} }
+{ "name": "Puma","size": 9,"color": "black" }
+{ "index" : {} }
+{ "name": "New Balance","size": 8,"color": "black" }
+'
+
+
+Bulk operations in one go (paste these one operation at a time)
+
+curl -XPOST 'localhost:9200/products/shoes/_bulk?pretty' -H 'Content-Type: application/json' -d'
+{ "index" : {"_id" : "3" } }
+{ "name": "Puma","size": 9,"color": "black" }
+{ "index" : {"_id" : "4" } }
+{ "name": "New Balance","size": 8,"color": "black" }
+{ "delete" : {"_id" : "2" } }
+{ "create" : {"_id" : "5" } }
+{ "name": "Nike Power","size": 12,"color": "black" }
+{ "update" : {"_id" : "1"} }
+{ "doc" : {"color" : "orange"} }
+'
+
+Demo 8 - Bulk indexing documents from a JSON file
+
+nano customers.json
+
+curl -H "Content-Type: application/x-ndjson" -XPOST 'localhost:9200/customers/personal/_bulk?pretty&refresh' --data-binary @"customers.json"
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+
+Module 3
+
+Demo 1 - Create some fake data so we can perform searches
+
+Go to: http://www.json-generator.com/
+
+[
+  '{{repeat(1000, 1000)}}',
+  {
+    name: '{{firstName()}} {{surname()}}',
+    age: '{{integer(18, 75)}}',
+    gender: '{{gender()}}',
+    email: '{{email()}}',
+    phone: '+1 {{phone()}}',
+    street: '{{integer(100, 999)}} {{street()}}',
+    city: '{{city()}}',
+    state: '{{state()}}, {{integer(100, 10000)}}'
+  }
+]
+
+Download and save as customers_full.json
+
+Open customers_full.json in sublimetext
+
+- Remove the array brackets
+- Find-Replace },{ with }\n{ in the regex mode on sublime text
+- Find-Replace {"name" with {"index" : {}}\n{"name" in the regex model on sublime text
+
+Now the file is in a format that can be parsed by elastic search
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+curl -XDELETE 'localhost:9200/customers?pretty'
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+Re-create the customers index 
+curl -H "Content-Type: application/x-ndjson" -XPOST 'localhost:9200/customers/personal/_bulk?pretty&refresh' --data-binary @"customers_full.json"
+
+curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+
+Demo 2: Searching using the query parameter
+
+curl -XGET 'localhost:9200/customers/_search?q=wyoming&pretty'
+
+localhost:9200/customers/_search?q=wyoming&pretty
+
+localhost:9200/customers/_search?q=wyoming&sort=age:desc&pretty
+
+localhost:9200/customers/_search?q=state:kentucky&sort=age:asc&pretty
+
+localhost:9200/customers/_search?q=state:kentucky&from=10&size=2&pretty
+
+localhost:9200/customers/_search?q=state:kentucky&explain&pretty
+
+Demo 3- Searching using the request body
+
+curl -XGET 'localhost:9200/products/_search?pretty' -d'
+{
+  "query": { "match_all": {} }
+}
+'
+
+curl -XGET 'localhost:9200/products/_search?pretty' -d'
+{
+  "query": {}
+}
+'
+
+curl -XGET 'localhost:9200/products/_search?pretty' -d'
+{
+  "query": { "match_all": {} },
+  "size": 3
+}
+'
+
+curl -XGET 'localhost:9200/products/_search?pretty' -d'
+{
+  "query": { "match_all": {} },
+  "from": 5, 
+  "size": 3
+}
+'
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+  "query": { "match_all": {} },
+  "sort": { "age": { "order": "desc" } },
+  "size": 20
+}
+'
+
+Demo 4 - Query terms and source filtering
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query" : {
+        "term" : { "name" : "gates" }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query" : {
+        "term" : { "street" : "chestnut" }
+    }
+}
+'
+
+Source filtering
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "_source" : false,
+    "query" : {
+        "term" : { "street" : "chestnut" }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "_source" : "st*",
+    "query" : {
+        "term" : { "state" : "washington" }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "_source" : ["st*", "*n*"],
+    "query" : {
+        "term" : { "state" : "washington" }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+     "_source": {
+        "includes": ["st*", "*n*"],
+        "excludes": [ "*der" ]
+     },
+    "query" : {
+        "term" : { "state" : "washington" }
+    }
+}
+'
+
+Demo 5 - Full text queries
+
+The match keyword
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match" : {
+            "name" : "webster"
+        }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match" : {
+              "name" : {
+                  "query" : "frank norris",
+                  "operator" : "or"
+               }        
+        }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match" : {
+            "street" : "tompkins place"
+        }
+    }
+}
+'
+
+The match_phrase keyword
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match_phrase" : {
+            "street" : "tompkins place"
+        }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match_phrase" : {
+            "state" : "puerto rico"
+        }
+    }
+}
+'
+The match_phrase_prefix
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match_phrase_prefix" : {
+            "name" : "ma"
+        }
+    }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+    "query": {
+        "match_phrase_prefix" : {
+            "street" : "clymer st"
+        }
+    }
+}
+'
+
+Demo 6 - Common terms queries
+
+
+curl -XGET 'localhost:9200/products/_search?pretty' -d'
+{
+    "query": {
+        "common": {
+            "reviews": {
+                "query": "this is great",
+                 "cutoff_frequency": 0.001
+            }
+        }
+    }
+}
+'
+
+Demo 7 - Boolean compound queries
+
+must
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "street": "ditmas" } },
+        { "match": { "street": "avenue" } }
+      ]
+    }
+  }
+}
+'
+should
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "street": "ditmas" } },
+        { "match": { "street": "street" } }
+      ]
+    }
+  }
+}
+'
+
+must_not
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "query": {
+    "bool": {
+      "must_not": [
+        { "match": { "state": "california texas" } },
+        { "match": { "street": "lane street" } }
+      ]
+    }
+  }
+}
+'
+
+Demo 8 - Term queries
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "term": {
+            "state": {
+              "value": "idaho"
+            }
+          }
+        },
+        {
+          "term": {
+            "state": {
+              "value": "california"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+'
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "term": {
+            "state": {
+              "value": "idaho",
+              "boost": 2.0
+            }
+          }
+        },
+        {
+          "term": {
+            "state": {
+              "value": "california"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+'
+
+Demo 9 - Filters
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -d'
+{
+  "query": {
+    "bool": {
+      "must": { "match_all": {} },
+      "filter": {
+        "range": {
+          "age": {
+            "gte": 20,
+            "lte": 30
+          }
+        }
+      }
+    }
+  }
+}
+'
+
+Using filters along with search terms
+
+curl -XGET 'localhost:9200/customers/_search?pretty' -H 'Content-Type: application/json' -d'
+{
+  "query": { 
+    "bool": { 
+      "must": 
+        { "match": { 
+             "state":   "alabama"
+        }
+      },
+      "filter": [ 
+        { "term":  { "gender": "female" }}, 
+        { "range": { "age": { "gte": "50" }}} 
+      ]
+    }
+  }
+}
+'
+
+Module 4
+
+Demo 1 - Metrics aggregations,
+
+Average
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+    "aggs" : {
+        "avg_age" : { 
+             "avg" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+    "aggregations" : {
+        "avg_age" : { 
+             "avg" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 1,
+    "aggs" : {
+        "avg_age" : { 
+             "avg" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+Average with some search terms
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+    "size" : 0,
+     "query" : {
+          "bool" : {
+               "filter" : {
+                   "match" : { "state" : "minnesota" }
+               }
+           }
+     },
+    "aggs" : {
+        "avg_age" : { 
+             "avg" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+Stats
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+    "size" : 0,
+    "aggs" : {
+        "age_stats" : { 
+             "stats" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+Demo 2 - Aggregations might need fielddata, e.g. cardinality aggregation
+Cardinality
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+    "aggs" : {
+        "age_count" : { 
+             "cardinality" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+    "aggs" : {
+        "gender_count" : { 
+             "cardinality" : { 
+                 "field" : "gender" 
+             } 
+         }
+    }
+}
+'
+
+curl -XPUT 'localhost:9200/customers/_mapping/personal?pretty' -d'
+{
+  "properties": {
+    "gender": { 
+      "type":     "text",
+      "fielddata": true
+    }                              
+  }            
+}         
+'
+
+Now re-run the original request
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+    "aggs" : {
+        "gender_count" : { 
+             "cardinality" : { 
+                 "field" : "gender" 
+             } 
+         }
+    }
+}
+'
+
+Demo 3 - Bucketing aggregation by field values
+
+Term aggregations
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+        "gender_bucket" : { 
+             "terms" : { 
+                 "field" : "gender" 
+             } 
+         }
+    }
+}
+'
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+        "age_bucket" : { 
+             "terms" : { 
+                 "field" : "age" 
+             } 
+         }
+    }
+}
+'
+
+Range aggregation
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+       "age_ranges" : {
+           "range" : {
+               "field" : "age",
+               "ranges" : [
+                   { "to" : 30 },
+                   { "from" : 30, "to" : 40 },
+                   { "from" : 40, "to" : 55 },
+                   { "from" : 55 }
+                ]
+            }
+        }
+     } 
+}
+'
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+       "age_ranges" : {
+           "range" : {
+               "field" : "age",
+               "keyed" : true,
+               "ranges" : [
+                   { "to" : 30 },
+                   { "from" : 30, "to" : 40 },
+                   { "from" : 40, "to" : 55 },
+                   { "from" : 55 }
+                ]
+            }
+        }
+     } 
+}
+'
+
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+       "age_ranges" : {
+           "range" : {
+               "field" : "age",
+               "keyed" : true,
+               "ranges" : [
+                   { "key": "young", "to" : 30 },
+                   { "key": "quarter-aged", "from" : 30, "to" : 40 },
+                   { "key": "middle-aged", "from" : 40, "to" : 55 },
+                   { "key": "senior", "from" : 55 }
+                ]
+            }
+        }
+     } 
+}
+'
+
+Demo 4 - Nesting aggregations
+
+2 level nesting
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+        "gender_bucket" : { 
+             "terms" : { 
+                 "field" : "gender" 
+             }, 
+             "aggs": {
+                 "average_age": {
+                      "avg": {
+                          "field": "age"
+                      }
+                 }
+              }
+         }
+    }
+}
+'
+
+3 level nesting
+curl -XPOST 'localhost:9200/customers/_search?&pretty' -d'
+{
+   "size" : 0,
+   "aggs" : {
+        "gender_bucket" : { 
+             "terms" : { 
+                 "field" : "gender" 
+             }, 
+             "aggs" : {
+                 "age_ranges" : {
+                     "range" : {
+                         "field" : "age",
+                         "keyed" : true,
+                         "ranges" : [
+                             { "key": "young", "to" : 30 },
+                             { "key": "middle-aged", "from" : 30, "to" : 55 },
+                             { "key": "senior", "from" : 55 }
+                          ]
+                      },
+                      "aggs": {
+                          "average_age": {
+                               "avg": {
+                                   "field": "age"
+                               }
+                          }
+                       }
+                  }
+               } 
+         }
+    }
+}
+'
+
+Demo 5 - Filter and filters aggregations
+
+curl -XPOST 'localhost:9200/customers/_search?size=0&pretty' -d'
+{
+    "aggs" : {
+        "state" : {
+            "filter" : { "term": { "state": "texas" } },
+            "aggs" : {
+                "avg_age" : { "avg" : { "field" : "age" } }
+            }
+        }
+    }
+}
+'
+
+Filters
+
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "size": 0,
+  "aggs" : {
+    "states" : {
+      "filters" : {
+        "filters" : {
+          "washington" :   { "match" : { "state" : "washington"   }},
+          "north carolina" :   { "match" : { "state" : "north carolina"   }},
+          "south dakota" : { "match" : { "state" : "south dakota" }}
+        }
+      }
+    }
+  }
+}
+'
+
+(Anonymous filters, returned in the same order as the original filter specification)
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "size": 0,
+  "aggs" : {
+    "states" : {
+      "filters" : {
+        "filters" : [
+          { "match" : { "state" : "washington"   }},
+          { "match" : { "state" : "north carolina"   }},
+          { "match" : { "state" : "south dakota" }}
+        ]
+      }
+    }
+  }
+}
+'
+
+Other bucket
+curl -XGET 'localhost:9200/customers/_search?pretty'  -d'
+{
+  "size": 0,
+  "aggs" : {
+    "states" : {
+      "filters" : {
+        "other_bucket_key": "other_states",  
+        "filters" : {
+          "washington" :   { "match" : { "state" : "washington"   }},
+          "north carolina" :   { "match" : { "state" : "north carolina"   }},
+          "south dakota" : { "match" : { "state" : "south dakota" }}
+        }
+      }
+    }
+  }
+}
+'
